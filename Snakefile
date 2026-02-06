@@ -16,6 +16,7 @@ rule assemble:
     output:
         directory("SRR2584857_assembly")
     threads: 8
+    conda: "megahit"
     shell: """
         megahit -1 {input.r1} -2 {input.r2} -f -m 5e9 -t {threads} -o {output}
     """
@@ -31,6 +32,7 @@ rule quast_assembly:
     input: "SRR2584857-assembly.fa"
     output: directory("SRR2584857_quast")
     threads: 8
+    conda: "megahit"
     shell: """
         quast {input} -o {output} --threads {threads}
     """
@@ -39,6 +41,7 @@ rule prokka_assembly:
     input: "SRR2584857-assembly.fa"
     output: directory("SRR2584857_annot")
     threads: 8
+    conda: "prokka"
     shell: """
         prokka --prefix {output} {input} --cpu {threads}
     """
@@ -51,6 +54,7 @@ rule map_to_assembly:
     output:
         "SRR2584857_reads.x.SRR2584857_assembly.bam",
     threads: 8
+    conda: "mapping"
     shell: """
         minimap2 -ax sr -t {threads} {input.ref} {input.r1} {input.r2} | \
            samtools view -b - -o {output}
@@ -61,6 +65,7 @@ rule sort_bam:
         "SRR2584857_reads.x.SRR2584857_assembly.bam",
     output:
         "SRR2584857_reads.x.SRR2584857_assembly.bam.sorted",
+    conda: "mapping"
     shell: """
         samtools sort {input} -o {output}
     """
@@ -68,6 +73,7 @@ rule sort_bam:
 rule sketch_assembly:
     input: "SRR2584857-assembly.fa"
     output: "SRR2584857-assembly.sig.zip"
+    conda: "sourmash"
     shell: """
         sourmash sketch dna {input} -o {output} --name assembly
     """
@@ -77,6 +83,7 @@ rule sketch_reads:
         r1 = "SRR2584857_1.fastq.gz",
         r2 = "SRR2584857_2.fastq.gz",
     output: "SRR2584857-reads.sig.zip"
+    conda: "sourmash"
     shell: """
         sourmash sketch dna -p abund {input} -o {output} --name reads
     """
